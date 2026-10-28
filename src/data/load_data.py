@@ -28,14 +28,16 @@ def _load_image (path : Path) -> ndarray | None:
         return None
 
 
-def load_data (data_dir : Path = RAW_DATA_DIR) -> tuple[ndarray, ndarray, list[str]]:
+def load_data (data_dir : Path = RAW_DATA_DIR / "Train") -> tuple[ndarray, ndarray, list[str]]:
     class_names = _list_classes(data_dir)
     images : list[ndarray] = []
     labels : list[str] = []
 
     for class_name in class_names:
         class_dir = data_dir / class_name
-        for path in sorted(class_dir.iterdir()):
+        # Use the nested "images" subdirectory if present
+        img_dir = class_dir / "images" if (class_dir / "images").is_dir() else class_dir
+        for path in sorted(img_dir.iterdir()):
             if not _is_valid_image(path):
                 continue
             image = _load_image(path)

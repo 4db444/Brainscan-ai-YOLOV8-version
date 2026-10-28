@@ -7,6 +7,10 @@ from ..config import REPORTS_FIGURES_DIR
 
 
 def count_images_per_class (y : ndarray) -> dict[str, int]:
+    # Guard against empty input
+    if y.size == 0:
+        print("Warning: empty label array – no images to count.")
+        return {}
     counts = dict(Counter(y.tolist()))
     print("Images per class:")
     for class_name, count in counts.items():
@@ -15,7 +19,14 @@ def count_images_per_class (y : ndarray) -> dict[str, int]:
 
 
 def check_class_balance (y : ndarray, threshold : float = 0.1) -> bool:
+    # Guard against empty input – treat as balanced (nothing to rebalance)
+    if y.size == 0:
+        print("Warning: empty label array – cannot assess balance; treating as balanced.")
+        return True
     counts = list(Counter(y.tolist()).values())
+    if not counts:
+        print("Warning: no class counts found – treating as balanced.")
+        return True
     imbalance_ratio = (max(counts) - min(counts)) / max(counts)
     balanced = imbalance_ratio <= threshold
     print(f"Imbalance ratio: {imbalance_ratio:.3f} -> {'balanced' if balanced else 'imbalanced'}")

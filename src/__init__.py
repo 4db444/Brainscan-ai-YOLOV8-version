@@ -9,7 +9,7 @@ from .data import (
     normalize_images,
     save_processed_data,
 )
-from .models import build_cnn, compile_model, train_model, evaluate_model, predict_image
+from .models import build_cnn, compile_model, build_inceptionv3, train_model, evaluate_model, predict_image
 from .visualization import (
     plot_class_distribution,
     plot_learning_curves,

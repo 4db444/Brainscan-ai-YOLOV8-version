@@ -10,12 +10,20 @@ from ..config import RANDOM_SEED, TEST_SIZE
 def rebalance_data (x : ndarray, y : ndarray) -> tuple[ndarray, ndarray]:
     # Undersample every class down to the size of the smallest one
     counts = Counter(y.tolist())
+    if not counts:
+        print("Warning: No class counts found – returning original data.")
+        return x, y
     min_count = min(counts.values())
+    if min_count == 0:
+        print("Warning: Minimum class count is zero – returning original data.")
+        return x, y
     rng = random.default_rng(RANDOM_SEED)
 
     indices = []
     for class_name in counts:
         class_indices = [i for i, label in enumerate(y) if label == class_name]
+        if len(class_indices) < min_count:
+            continue
         picked = rng.choice(class_indices, size=min_count, replace=False)
         indices.extend(picked.tolist())
 
