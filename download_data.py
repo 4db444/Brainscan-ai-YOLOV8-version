@@ -1,49 +1,29 @@
 import shutil
-import zipfile
 from pathlib import Path
 
-import gdown
+import kagglehub
 
 from src.config import RAW_DATA_DIR, TMP_DIR
 
+KAGGLE_DATASET = "ahmedsorour1/mri-for-brain-tumor-with-bounding-boxes"
 
-def download_zip() -> Path:
-    """Download the zip from Google Drive (skipped if already downloaded)."""
+
+def download_dataset() -> Path:
+    """Download the dataset from Kaggle (kagglehub caches it and skips if already present)."""
     TMP_DIR.mkdir(parents=True, exist_ok=True)
-    zip_path = TMP_DIR / "brain_tumor_mri.zip"
-
-    if zip_path.exists():
-        print(f"Zip already downloaded: {zip_path}")
-        return zip_path
-
-    url = f"https://drive.google.com/file/d/1WtjAJx4k_r2dI4YF4Ht84LcGDoerltQY/view"
-    result = gdown.download(url, str(zip_path), quiet=False)
-    if result is None:
-        raise RuntimeError(
-            "Download failed. Check that the file is shared as 'Anyone with the link' "
-            "this file; try again later."
-        )
-    return zip_path
-
-
-def extract_zip(zip_path: Path) -> Path:
-    """Extract the zip into a temp folder and return the real dataset root."""
-    extract_dir = TMP_DIR / "extracted"
-    if extract_dir.exists():
-        shutil.rmtree(extract_dir)
-
     try:
-        with zipfile.ZipFile(zip_path) as zf:
-            corrupted = zf.testzip()
-            if corrupted:
-                raise zipfile.BadZipFile(f"Corrupted file in archive: {corrupted}")
-            zf.extractall(extract_dir)
-    except zipfile.BadZipFile:
-        zip_path.unlink(missing_ok=True)   # force a fresh download next run
-        raise
+        path = kagglehub.dataset_download(KAGGLE_DATASET)
+    except Exception as e:
+        raise RuntimeError(
+            f"Download from Kaggle failed: {e}\n"
+            "If authentication is required, set KAGGLE_USERNAME / KAGGLE_KEY "
+            "environment variables or place kaggle.json in ~/.kaggle/."
+        ) from e
+    return Path(path)
 
-    # Many zips wrap everything in one top-level folder: unwrap it
-    root = extract_dir
+
+def find_dataset_root(root: Path) -> Path:
+    """Many datasets wrap everything in one top-level folder: unwrap it."""
     entries = [p for p in root.iterdir() if p.name != "__MACOSX"]
     while len(entries) == 1 and entries[0].is_dir():
         root = entries[0]
@@ -58,18 +38,22 @@ def main(force: bool = False) -> None:
         print("Data already present in data/raw/, skipping. Use --force to redo.")
         return
 
-    zip_path = download_zip()
-    dataset_root = extract_zip(zip_path)
+    downloaded_path = download_dataset()
+    dataset_root = find_dataset_root(downloaded_path)
 
     for item in dataset_root.iterdir():
         target = RAW_DATA_DIR / item.name
         if target.exists():
             shutil.rmtree(target) if target.is_dir() else target.unlink()
-        shutil.move(str(item), str(target))
+        # Copy (not move) so the kagglehub cache stays intact
+        if item.is_dir():
+            shutil.copytree(item, target)
+        else:
+            shutil.copy2(item, target)
 
-    shutil.rmtree(TMP_DIR, ignore_errors=True)   # remove zip + temp files
+    shutil.rmtree(TMP_DIR, ignore_errors=True)
     print(f"Dataset ready in {RAW_DATA_DIR}")
-    print("Classes found:", sorted(p.name for p in RAW_DATA_DIR.iterdir() if p.is_dir()))
+    print("Contents:", sorted(p.name for p in RAW_DATA_DIR.iterdir()))
 
 
 if __name__ == "__main__":

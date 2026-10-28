@@ -19,7 +19,8 @@ dependencies = [
     "types-matplotlib",
     "gdown",
     "opencv-python",
-    "tensorflow"
+    "tensorflow",
+    "kagglehub"
 ]
 
 [tool.setuptools.packages.find]
