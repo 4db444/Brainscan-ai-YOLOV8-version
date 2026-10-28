@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "brainscan-ai"
+version = "0.1.0"
+dependencies = [
+    "mypy",
+    "numpy",
+    "pandas",
+    "pandas-stubs",
+    "python-dotenv",
+    "seaborn",
+    "types-seaborn",
+    "scikit-learn",
+    "streamlit",
+    "matplotlib",
+    "types-matplotlib",
+    "gdown",
+    "opencv-python",
+    "tensorflow"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

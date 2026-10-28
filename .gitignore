@@ -1,0 +1,6 @@
+.*/
+.env
+*.jpg
+*.egg-info/
+*.h5
+*.npy
